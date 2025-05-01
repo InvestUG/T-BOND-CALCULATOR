@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InvestUG T-Bond Calculator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7f9;
+      color: #003366;
+      padding: 20px;
+    }
+    .calculator {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border: 2px solid #FFD700;
+    }
+    h2 {
+      text-align: center;
+      color: #FFD700;
+    }
+    label {
+      display: block;
+      margin: 12px 0 4px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #FFD700;
+      color: #003366;
+      border: none;
+      padding: 10px;
+      width: 100%;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .results {
+      margin-top: 20px;
+      background: #eaf2f8;
+      padding: 15px;
+      border-radius: 6px;
+    }
+    .results p {
+      margin: 6px 0;
+      font-size: 15px;
+    }
+    .highlight {
+      background-color: #fff9d6;
+      padding: 8px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #003366;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h2>T-Bond Calculator</h2>
+    <label for="amount">Investment Amount (UGX)</label>
+    <input type="text" id="amount" placeholder="e.g. 1,000,000">
+
+    <label for="rate">Interest Rate (%)</label>
+    <input type="number" id="rate" placeholder="e.g. 15">
+
+    <label for="term">Bond Term (Years)</label>
+    <input type="number" id="term" placeholder="e.g. 10">
+
+    <button onclick="calculateBond()">Calculate</button>
+    <button onclick="downloadPDF()">Download Results as PDF</button>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      document.getElementById("amount").addEventListener("input", function () {
+        let value = this.value.replace(/,/g, "");
+        if (!isNaN(value)) {
+          this.value = Number(value).toLocaleString();
+        }
+      });
+    };
+
+    let resultText = "";
+
+    function calculateBond() {
+      let rawAmount = document.getElementById("amount").value.replace(/,/g, "");
+      const amount = parseFloat(rawAmount);
+      const rate = parseFloat(document.getElementById("rate").value);
+      const term = parseInt(document.getElementById("term").value);
+
+      if (!amount || !rate || !term) {
+        document.getElementById("results").innerHTML = "<p>Please fill in all fields.</p>";
+        return;
+      }
+
+      const annualInterest = (rate / 100) * amount;
+      const coupon = annualInterest / 2;
+      const grossInterest = annualInterest * term;
+      const whtRate = term >= 10 ? 0.10 : 0.20;
+      const wht = grossInterest * whtRate;
+      const netEarnings = grossInterest - wht;
+      const netAnnualInterest = annualInterest - (annualInterest * whtRate);
+      const netCoupon = netAnnualInterest / 2;
+
+      document.getElementById("results").innerHTML = `
+        <h3>Results</h3>
+        <p><strong>Annual Interest:</strong> UGX ${annualInterest.toLocaleString()}</p>
+        <p><strong>Semi-Annual Coupon:</strong> UGX ${coupon.toLocaleString()}</p>
+        <p><strong>Net Annual Interest (after WHT):</strong> UGX ${netAnnualInterest.toLocaleString()}</p>
+        <p><strong>Net Semi-Annual Coupon:</strong> UGX ${netCoupon.toLocaleString()}</p>
+        <div class="highlight">
+          <p><strong>Total Gross Interest:</strong> UGX ${grossInterest.toLocaleString()}</p>
+          <p><strong>Total WHT (${whtRate * 100}%):</strong> UGX ${wht.toLocaleString()}</p>
+          <p><strong>Net Earnings (Total):</strong> UGX ${netEarnings.toLocaleString()}</p>
+        </div>
+      `;
+
+      resultText = `T-Bond Calculator Results\n\n` +
+                   `Investment Amount: UGX ${amount.toLocaleString()}\n` +
+                   `Interest Rate: ${rate}%\n` +
+                   `Term: ${term} years\n\n` +
+                   `Annual Interest: UGX ${annualInterest.toLocaleString()}\n` +
+                   `Semi-Annual Coupon: UGX ${coupon.toLocaleString()}\n` +
+                   `Net Annual Interest: UGX ${netAnnualInterest.toLocaleString()}\n` +
+                   `Net Semi-Annual Coupon: UGX ${netCoupon.toLocaleString()}\n` +
+                   `Total Gross Interest: UGX ${grossInterest.toLocaleString()}\n` +
+                   `Total WHT (${whtRate * 100}%): UGX ${wht.toLocaleString()}\n` +
+                   `Net Earnings (Total): UGX ${netEarnings.toLocaleString()}`;
+    }
+
+    function downloadPDF() {
+      if (!resultText) {
+        alert("Please calculate results first.");
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFont("Helvetica");
+      doc.setFontSize(12);
+      doc.text(resultText, 10, 20);
+      doc.save("T-Bond_Calculation_Results.pdf");
+    }
+  </script>
+</body>
+</html>
